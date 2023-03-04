@@ -41,8 +41,8 @@ def new_keymap(cli):
     cli.echo('')
 
     # ask for user input if keyboard or keymap was not provided in the command line
-    kb_name = cli.config.new_keymap.keyboard if cli.config.new_keymap.keyboard else prompt_keyboard()
-    user_name = cli.config.new_keymap.keymap if cli.config.new_keymap.keymap else prompt_user()
+    kb_name = cli.config.new_keymap.keyboard or prompt_keyboard()
+    user_name = cli.config.new_keymap.keymap or prompt_user()
 
     # check directories
     if not is_keyboard(kb_name):

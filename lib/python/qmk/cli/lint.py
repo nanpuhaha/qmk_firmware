@@ -20,12 +20,11 @@ def _list_defaultish_keymaps(kb):
     """
     defaultish = ['ansi', 'iso', 'via']
 
-    keymaps = set()
-    for x in list_keymaps(kb):
-        if x in defaultish or x.startswith('default'):
-            keymaps.add(x)
-
-    return keymaps
+    return {
+        x
+        for x in list_keymaps(kb)
+        if x in defaultish or x.startswith('default')
+    }
 
 
 def _get_code_files(kb, km=None):
@@ -33,14 +32,11 @@ def _get_code_files(kb, km=None):
     """
     search_path = locate_keymap(kb, km).parent if km else keyboard(kb)
 
-    code_files = []
-    for file in c_source_files([search_path]):
-        # Ignore keymaps when only globing keyboard files
-        if not km and 'keymaps' in file.parts:
-            continue
-        code_files.append(file)
-
-    return code_files
+    return [
+        file
+        for file in c_source_files([search_path])
+        if km or 'keymaps' not in file.parts
+    ]
 
 
 def _has_license(file):
@@ -69,10 +65,14 @@ def _handle_json_errors(kb, info):
 def _chibios_conf_includenext_check(target):
     """Check the ChibiOS conf.h for the correct inclusion of the next conf.h
     """
-    for i, line in enumerate(target.open()):
-        if f'#include_next "{target.name}"' in line:
-            return f'Found `#include_next "{target.name}"` on line {i} of {target}, should be `#include_next <{target.name}>` (use angle brackets, not quotes)'
-    return None
+    return next(
+        (
+            f'Found `#include_next "{target.name}"` on line {i} of {target}, should be `#include_next <{target.name}>` (use angle brackets, not quotes)'
+            for i, line in enumerate(target.open())
+            if f'#include_next "{target.name}"' in line
+        ),
+        None,
+    )
 
 
 def _rules_mk_assignment_only(kb):
@@ -104,7 +104,7 @@ def _rules_mk_assignment_only(kb):
                         continuation = line[:-1]
                         continue
 
-                    if line and '=' not in line:
+                    if '=' not in line:
                         errors.append(f'Non-assignment code on line +{i} {rules_mk}: {line}')
 
     return errors
@@ -117,10 +117,8 @@ def keymap_check(kb, km):
     keymap_path = locate_keymap(kb, km)
 
     if not keymap_path:
-        ok = False
         cli.log.error("%s: Can't find %s keymap.", kb, km)
-        return ok
-
+        return False
     # Additional checks
     invalid_files = git_get_ignored_files(keymap_path.parent.as_posix())
     for file in invalid_files:
@@ -150,9 +148,7 @@ def keyboard_check(kb):
     if not _handle_json_errors(kb, kb_info):
         ok = False
 
-    # Additional checks
-    rules_mk_assignment_errors = _rules_mk_assignment_only(kb)
-    if rules_mk_assignment_errors:
+    if rules_mk_assignment_errors := _rules_mk_assignment_only(kb):
         ok = False
         cli.log.error('%s: Non-assignment code found in rules.mk. Move it to post_rules.mk instead.', kb)
         for assignment_error in rules_mk_assignment_errors:

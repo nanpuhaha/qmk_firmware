@@ -64,7 +64,7 @@ def _load_keymap_info(keyboard, keymap):
 )
 @cli.argument('-km', '--keymap', type=str, default='default', help="The keymap name to build. Default is 'default'.")
 @cli.argument('-e', '--env', arg_only=True, action='append', default=[], help="Set a variable to be passed to make. May be passed multiple times.")
-@cli.subcommand('Compile QMK Firmware for all keyboards.', hidden=False if cli.config.user.developer else True)
+@cli.subcommand('Compile QMK Firmware for all keyboards.', hidden=not cli.config.user.developer)
 def mass_compile(cli):
     """Compile QMK Firmware against all keyboards.
     """
@@ -100,8 +100,8 @@ def mass_compile(cli):
             for filter_txt in cli.args.filter:
                 f = equals_re.match(filter_txt)
                 if f is not None:
-                    key = f.group('key')
-                    value = f.group('value')
+                    key = f['key']
+                    value = f['value']
                     cli.log.info(f'Filtering on condition ("{key}" == "{value}")...')
 
                     def _make_filter(k, v):
@@ -119,13 +119,13 @@ def mass_compile(cli):
 
                 f = exists_re.match(filter_txt)
                 if f is not None:
-                    key = f.group('key')
+                    key = f['key']
                     cli.log.info(f'Filtering on condition (exists: "{key}")...')
                     valid_keymaps = filter(lambda e: e[2].get(key) is not None, valid_keymaps)
 
             targets = [(e[0], e[1]) for e in valid_keymaps]
 
-    if len(targets) == 0:
+    if not targets:
         return
 
     builddir.mkdir(parents=True, exist_ok=True)
@@ -171,6 +171,6 @@ all: {keyboard_safe}_{keymap_name}_binary
     cli.run([make_cmd, *get_make_parallel_args(cli.args.parallel), '-f', makefile.as_posix(), 'all'], capture_output=False, stdin=DEVNULL)
 
     # Check for failures
-    failures = [f for f in builddir.glob(f'failed.log.{os.getpid()}.*')]
-    if len(failures) > 0:
+    failures = list(builddir.glob(f'failed.log.{os.getpid()}.*'))
+    if failures:
         return False

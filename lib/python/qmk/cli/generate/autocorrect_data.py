@@ -80,7 +80,7 @@ def parse_file(file_name: str) -> List[Tuple[str, str]]:
             continue
 
         # Check that `typo` is valid.
-        if not (all([c in TYPO_CHARS for c in typo])):
+        if any(c not in TYPO_CHARS for c in typo):
             cli.log.error('{fg_red}Error:%d:{fg_reset} Typo "{fg_cyan}%s{fg_reset}" has characters other than a-z, \' and :.', line_number, typo)
             sys.exit(1)
         for other_typo in typos:
@@ -121,9 +121,7 @@ def make_trie(autocorrections: List[Tuple[str, str]]) -> Dict[str, Any]:
 def parse_file_lines(file_name: str) -> Iterator[Tuple[int, str, str]]:
     """Parses lines read from `file_name` into typo-correction pairs."""
 
-    line_number = 0
-    for line in open(file_name, 'rt'):
-        line_number += 1
+    for line_number, line in enumerate(open(file_name, 'rt'), start=1):
         line = line.strip()
         if line and line[0] != '#':
             # Parse syntax "typo -> correction", using strip to ignore indenting.
@@ -145,15 +143,15 @@ def check_typo_against_dictionary(typo: str, line_number: int, correct_words) ->
     if typo.startswith(':') and typo.endswith(':'):
         if typo[1:-1] in correct_words:
             cli.log.warning('{fg_yellow}Warning:%d:{fg_reset} Typo "{fg_cyan}%s{fg_reset}" is a correctly spelled dictionary word.', line_number, typo)
-    elif typo.startswith(':') and not typo.endswith(':'):
+    elif typo.startswith(':'):
         for word in correct_words:
             if word.startswith(typo[1:]):
                 cli.log.warning('{fg_yellow}Warning:%d: {fg_reset}Typo "{fg_cyan}%s{fg_reset}" would falsely trigger on correctly spelled word "{fg_cyan}%s{fg_reset}".', line_number, typo, word)
-    elif not typo.startswith(':') and typo.endswith(':'):
+    elif typo.endswith(':'):
         for word in correct_words:
             if word.endswith(typo[:-1]):
                 cli.log.warning('{fg_yellow}Warning:%d:{fg_reset} Typo "{fg_cyan}%s{fg_reset}" would falsely trigger on correctly spelled word "{fg_cyan}%s{fg_reset}".', line_number, typo, word)
-    elif not typo.startswith(':') and not typo.endswith(':'):
+    else:
         for word in correct_words:
             if typo in word:
                 cli.log.warning('{fg_yellow}Warning:%d:{fg_reset} Typo "{fg_cyan}%s{fg_reset}" would falsely trigger on correctly spelled word "{fg_cyan}%s{fg_reset}".', line_number, typo, word)
@@ -266,20 +264,41 @@ def generate_autocorrect_data(cli):
     max_typo = max(autocorrections, key=typo_len)[0]
 
     # Build the autocorrect_data.h file.
-    autocorrect_data_h_lines = [GPL2_HEADER_C_LIKE, GENERATED_HEADER_C_LIKE, '#pragma once', '']
+    autocorrect_data_h_lines = [
+        GPL2_HEADER_C_LIKE,
+        GENERATED_HEADER_C_LIKE,
+        '#pragma once',
+        '',
+        f'// Autocorrection dictionary ({len(autocorrections)} entries):',
+    ]
 
-    autocorrect_data_h_lines.append(f'// Autocorrection dictionary ({len(autocorrections)} entries):')
-    for typo, correction in autocorrections:
-        autocorrect_data_h_lines.append(f'//   {typo:<{len(max_typo)}} -> {correction}')
-
-    autocorrect_data_h_lines.append('')
-    autocorrect_data_h_lines.append(f'#define AUTOCORRECT_MIN_LENGTH {len(min_typo)} // "{min_typo}"')
-    autocorrect_data_h_lines.append(f'#define AUTOCORRECT_MAX_LENGTH {len(max_typo)} // "{max_typo}"')
-    autocorrect_data_h_lines.append(f'#define DICTIONARY_SIZE {len(data)}')
-    autocorrect_data_h_lines.append('')
-    autocorrect_data_h_lines.append('static const uint8_t autocorrect_data[DICTIONARY_SIZE] PROGMEM = {')
-    autocorrect_data_h_lines.append(textwrap.fill('    %s' % (', '.join(map(to_hex, data))), width=100, subsequent_indent='    '))
-    autocorrect_data_h_lines.append('};')
-
+    autocorrect_data_h_lines.extend(
+        f'//   {typo:<{len(max_typo)}} -> {correction}'
+        for typo, correction in autocorrections
+    )
+    autocorrect_data_h_lines.extend(
+        (
+            '',
+            f'#define AUTOCORRECT_MIN_LENGTH {len(min_typo)} // "{min_typo}"',
+            f'#define AUTOCORRECT_MAX_LENGTH {len(max_typo)} // "{max_typo}"',
+        )
+    )
+    autocorrect_data_h_lines.extend(
+        (
+            f'#define DICTIONARY_SIZE {len(data)}',
+            '',
+            'static const uint8_t autocorrect_data[DICTIONARY_SIZE] PROGMEM = {',
+        )
+    )
+    autocorrect_data_h_lines.extend(
+        (
+            textwrap.fill(
+                f"    {', '.join(map(to_hex, data))}",
+                width=100,
+                subsequent_indent='    ',
+            ),
+            '};',
+        )
+    )
     # Show the results
     dump_lines(cli.args.output, autocorrect_data_h_lines, cli.args.quiet)

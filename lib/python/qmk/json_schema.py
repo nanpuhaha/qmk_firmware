@@ -115,17 +115,11 @@ def merge_ordered_dicts(dicts):
 
     def add_entry(target, k, v):
         if k in target and isinstance(v, (OrderedDict, dict)):
-            if "!reset!" in v:
-                target[k] = v
-            else:
-                target[k] = merge_ordered_dicts([target[k], v])
+            target[k] = v if "!reset!" in v else merge_ordered_dicts([target[k], v])
             if "!reset!" in target[k]:
                 del target[k]["!reset!"]
         elif k in target and isinstance(v, list):
-            if v[0] == '!reset!':
-                target[k] = v[1:]
-            else:
-                target[k] = target[k] + v
+            target[k] = v[1:] if v[0] == '!reset!' else target[k] + v
         elif v == "!delete!" and isinstance(target, (OrderedDict, dict)):
             del target[k]
         else:

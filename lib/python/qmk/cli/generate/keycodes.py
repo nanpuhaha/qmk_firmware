@@ -13,9 +13,7 @@ def _translate_group(group):
     """
     if group == 'modifiers':
         return 'modifier'
-    if group == 'media':
-        return 'consumer'
-    return group
+    return 'consumer' if group == 'media' else group
 
 
 def _render_key(key):
@@ -45,7 +43,7 @@ def _generate_ranges(lines, keycodes):
         hi = lo + mask
         define = value.get("define")
         lines.append(f'    {define.ljust(30)} = 0x{lo:04X},')
-        lines.append(f'    {(define + "_MAX").ljust(30)} = 0x{hi:04X},')
+        lines.append(f'    {f"{define}_MAX".ljust(30)} = 0x{hi:04X},')
     lines.append('};')
 
 
@@ -71,7 +69,9 @@ def _generate_helpers(lines, keycodes):
     lines.append('// Range Helpers')
     for value in keycodes["ranges"].values():
         define = value.get("define")
-        lines.append(f'#define IS_{define}(code) ((code) >= {define} && (code) <= {define + "_MAX"})')
+        lines.append(
+            f'#define IS_{define}(code) ((code) >= {define} && (code) <= {define}_MAX)'
+        )
 
     # extract min/max
     temp = {}

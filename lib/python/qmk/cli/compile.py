@@ -14,13 +14,7 @@ from qmk.keymap import keymap_completer, locate_keymap
 
 
 def _is_keymap_target(keyboard, keymap):
-    if keymap == 'all':
-        return True
-
-    if locate_keymap(keyboard, keymap):
-        return True
-
-    return False
+    return True if keymap == 'all' else bool(locate_keymap(keyboard, keymap))
 
 
 @cli.argument('filename', nargs='?', arg_only=True, type=qmk.path.FileType('r'), completer=FilesCompleter('.json'), help='The configurator export to compile')

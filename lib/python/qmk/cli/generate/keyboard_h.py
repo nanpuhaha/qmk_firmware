@@ -29,7 +29,7 @@ def _generate_layouts(keyboard):
         if layout_data['c_macro']:
             continue
 
-        if not all('matrix' in key_data for key_data in layout_data['layout']):
+        if any('matrix' not in key_data for key_data in layout_data['layout']):
             cli.log.debug(f'{keyboard}/{layout_name}: No or incomplete matrix data!')
             continue
 
@@ -48,20 +48,18 @@ def _generate_layouts(keyboard):
                 cli.log.error(f'{keyboard}/{layout_name}: Matrix data out of bounds at index {index} ({key_name}): [{row}, {col}]')
                 return []
 
-        lines.append('')
-        lines.append(f'#define {layout_name}({", ".join(layout_keys)}) {{ \\')
-
-        rows = ', \\\n'.join(['\t {' + ', '.join(row) + '}' for row in layout_matrix])
-        rows += ' \\'
-        lines.append(rows)
-        lines.append('}')
-
+        lines.extend(('', f'#define {layout_name}({", ".join(layout_keys)}) {{ \\'))
+        rows = (
+            ', \\\n'.join(
+                ['\t {' + ', '.join(row) + '}' for row in layout_matrix]
+            )
+            + ' \\'
+        )
+        lines.extend((rows, '}'))
     for alias, target in kb_info_json.get('layout_aliases', {}).items():
-        lines.append('')
-        lines.append(f'#ifndef {alias}')
-        lines.append(f'#   define {alias} {target}')
-        lines.append('#endif')
-
+        lines.extend(
+            ('', f'#ifndef {alias}', f'#   define {alias} {target}', '#endif')
+        )
     return lines
 
 
@@ -78,10 +76,15 @@ def generate_keyboard_h(cli):
     valid_config = dd_layouts or keyboard_h
 
     # Build the layouts.h file.
-    keyboard_h_lines = [GPL2_HEADER_C_LIKE, GENERATED_HEADER_C_LIKE, '#pragma once', '#include "quantum.h"']
+    keyboard_h_lines = [
+        GPL2_HEADER_C_LIKE,
+        GENERATED_HEADER_C_LIKE,
+        '#pragma once',
+        '#include "quantum.h"',
+        '',
+        '// Layout content',
+    ]
 
-    keyboard_h_lines.append('')
-    keyboard_h_lines.append('// Layout content')
     if dd_layouts:
         keyboard_h_lines.extend(dd_layouts)
     if keyboard_h:

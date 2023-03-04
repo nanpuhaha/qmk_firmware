@@ -8,10 +8,10 @@ EXTRAS_PATH = KEYCODES_PATH / 'extras'
 
 
 def _find_versions(path, prefix):
-    ret = []
-    for file in path.glob(f'{prefix}_[0-9].[0-9].[0-9].hjson'):
-        ret.append(file.stem.split('_')[-1])
-
+    ret = [
+        file.stem.split('_')[-1]
+        for file in path.glob(f'{prefix}_[0-9].[0-9].[0-9].hjson')
+    ]
     ret.sort(reverse=True)
     return ret
 
@@ -52,10 +52,7 @@ def _process_files(files):
     # allow override within types of fragments - but not globally
     spec = {}
     for category in files.values():
-        specs = []
-        for file in category:
-            specs.append(json_load(file))
-
+        specs = [json_load(file) for file in category]
         deep_update(spec, merge_ordered_dicts(specs))
 
     return spec
@@ -70,8 +67,7 @@ def _validate(spec):
     for value in spec['keycodes'].values():
         keycodes.append(value['key'])
         keycodes.extend(value.get('aliases', []))
-    duplicates = set([x for x in keycodes if keycodes.count(x) > 1])
-    if duplicates:
+    if duplicates := {x for x in keycodes if keycodes.count(x) > 1}:
         raise ValueError(f'Keycode spec contains duplicate keycodes! ({",".join(duplicates)})')
 
 
@@ -110,8 +106,7 @@ def list_versions(lang=None):
 def list_languages():
     """Return available languages
     """
-    ret = set()
-    for file in EXTRAS_PATH.glob('keycodes_*_[0-9].[0-9].[0-9].hjson'):
-        ret.add(file.stem.split('_')[1])
-
-    return ret
+    return {
+        file.stem.split('_')[1]
+        for file in EXTRAS_PATH.glob('keycodes_*_[0-9].[0-9].[0-9].hjson')
+    }

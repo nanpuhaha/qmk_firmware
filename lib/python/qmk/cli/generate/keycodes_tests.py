@@ -25,12 +25,15 @@ def generate_keycodes_tests(cli):
     """
 
     # Build the keycodes.h file.
-    keycodes_h_lines = [GPL2_HEADER_C_LIKE, GENERATED_HEADER_C_LIKE, '// clang-format off']
-    keycodes_h_lines.append('extern "C" {\n#include <keycode.h>\n}')
-    keycodes_h_lines.append('#include <map>')
-    keycodes_h_lines.append('#include <string>')
-    keycodes_h_lines.append('#include <cstdint>')
-
+    keycodes_h_lines = [
+        GPL2_HEADER_C_LIKE,
+        GENERATED_HEADER_C_LIKE,
+        '// clang-format off',
+        'extern "C" {\n#include <keycode.h>\n}',
+        '#include <map>',
+        '#include <string>',
+        '#include <cstdint>',
+    ]
     keycodes = load_spec(cli.args.version)
 
     _generate_defines(keycodes_h_lines, keycodes)

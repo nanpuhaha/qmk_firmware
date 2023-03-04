@@ -146,9 +146,11 @@ def generate_split_config(kb_info_json, config_h_lines):
         elif kb_info_json['split']['primary'] == 'eeprom':
             config_h_lines.append(generate_define('EE_HANDS'))
 
-    if 'protocol' in kb_info_json['split'].get('transport', {}):
-        if kb_info_json['split']['transport']['protocol'] == 'i2c':
-            config_h_lines.append(generate_define('USE_I2C'))
+    if (
+        'protocol' in kb_info_json['split'].get('transport', {})
+        and kb_info_json['split']['transport']['protocol'] == 'i2c'
+    ):
+        config_h_lines.append(generate_define('USE_I2C'))
 
     if 'right' in kb_info_json['split'].get('matrix_pins', {}):
         config_h_lines.append(matrix_pins(kb_info_json['split']['matrix_pins']['right'], '_RIGHT'))

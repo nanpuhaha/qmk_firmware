@@ -139,34 +139,33 @@ def decodeEepromFEE9(in_file, size):
             decoded[address] = entry & 0xFF
             if VERBOSE:
                 print("[0x%04x]: BYTE 0x%02x = 0x%02x" % (be_entry, address, decoded[address]))
+        elif (entry & VALUE_NEXT) == VALUE_NEXT:
+            # Read next word as value
+            value = in_file.read(2)
+            if len(value) < 2:
+                print("Partial log value at position 0x%04x" % pos, file=sys.stderr)
+                break
+            pos += 2
+            address = entry & 0x1FFF
+            address <<= 1
+            address += BYTE_RANGE
+            decoded[address]   = unpack('B', value[0])[0] ^ 0xFF
+            decoded[address+1] = unpack('B', value[1])[0] ^ 0xFF
+            be_value = unpack('>H', value)[0]
+            if VERBOSE:
+                print("[0x%04x 0x%04x]: WORD 0x%04x = 0x%02x%02x" % (be_entry, be_value, address, decoded[address+1], decoded[address]))
         else:
-            if (entry & VALUE_NEXT) == VALUE_NEXT:
-                # Read next word as value
-                value = in_file.read(2)
-                if len(value) < 2:
-                    print("Partial log value at position 0x%04x" % pos, file=sys.stderr)
-                    break
-                pos += 2
-                address = entry & 0x1FFF
-                address <<= 1
-                address += BYTE_RANGE
-                decoded[address]   = unpack('B', value[0])[0] ^ 0xFF
-                decoded[address+1] = unpack('B', value[1])[0] ^ 0xFF
-                be_value = unpack('>H', value)[0]
+            # Reserved for future use
+            if entry & VALUE_RESERVED:
                 if VERBOSE:
-                    print("[0x%04x 0x%04x]: WORD 0x%04x = 0x%02x%02x" % (be_entry, be_value, address, decoded[address+1], decoded[address]))
-            else:
-                # Reserved for future use
-                if entry & VALUE_RESERVED:
-                    if VERBOSE:
-                        print("[0x%04x]: RESERVED 0x%04x" % (be_entry, address))
-                    continue
-                address = entry & 0x1FFF
-                address <<= 1
-                decoded[address]   = (entry & VALUE_ENCODED) >> 13
-                decoded[address+1] = 0
-                if VERBOSE:
-                    print("[0x%04x]: ENCODED 0x%04x = 0x%02x%02x" % (be_entry, address, decoded[address+1], decoded[address]))
+                    print("[0x%04x]: RESERVED 0x%04x" % (be_entry, address))
+                continue
+            address = entry & 0x1FFF
+            address <<= 1
+            decoded[address]   = (entry & VALUE_ENCODED) >> 13
+            decoded[address+1] = 0
+            if VERBOSE:
+                print("[0x%04x]: ENCODED 0x%04x = 0x%02x%02x" % (be_entry, address, decoded[address+1], decoded[address]))
 
     return decoded
 
@@ -185,10 +184,7 @@ def dumpBinary(data, canonical):
             print("  |", end='')
             for i in range(len(row)):
                 char = row[i]
-                if char is None:
-                    char = " "
-                else:
-                    char = chr(char)
+                char = " " if char is None else chr(char)
                 if char not in PRINTABLE:
                     char = "."
                 print(char, end='')
@@ -251,9 +247,9 @@ def dumpVia(data, base, layers, cols, rows, macros,
         return 3
     for layer in range(layers):
         print("%s LAYER %d %s" % ('-'*int(cols*2.5), layer, '-'*int(cols*2.5)))
-        for row in range(rows):
+        for _ in range(rows):
             print("%04x  | " % pos, end='')
-            for col in range(cols):
+            for _ in range(cols):
                 keycode = (data[pos] << 8) | (data[pos+1])
                 print(" %04x" % keycode, end='')
                 pos += 2
@@ -292,7 +288,10 @@ def decodeSTM32Eeprom(input, canonical, size=None, output=None, **kwargs):
             eeconfig = EECONFIG_V1
             via_base = VIABASE_V1
         else:
-            print("Unknown magic signature: %s" % " ".join(["0x%02x" % ord(x) for x in magic]), file=sys.stderr)
+            print(
+                f'Unknown magic signature: {" ".join(["0x%02x" % ord(x) for x in magic])}',
+                file=sys.stderr,
+            )
             return 1
 
     if output is not None:

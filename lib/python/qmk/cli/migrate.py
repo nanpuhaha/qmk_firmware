@@ -19,9 +19,7 @@ def _candidate_files(keyboard):
     files = []
     for dir in kb_dir.parts:
         cur_dir = cur_dir / dir
-        files.append(cur_dir / 'config.h')
-        files.append(cur_dir / 'rules.mk')
-
+        files.extend((cur_dir / 'config.h', cur_dir / 'rules.mk'))
     return [file for file in files if file.exists()]
 
 

@@ -22,7 +22,13 @@ def painter_make_font_image(cli):
     font = QFFFont(cli)
     # Read from the input file
     cli.args.font = normpath(cli.args.font)
-    font.generate_image(cli.args.font, cli.args.size, include_ascii_glyphs=(not cli.args.no_ascii), unicode_glyphs=cli.args.unicode_glyphs, use_aa=(False if cli.args.no_aa else True))
+    font.generate_image(
+        cli.args.font,
+        cli.args.size,
+        include_ascii_glyphs=(not cli.args.no_ascii),
+        unicode_glyphs=cli.args.unicode_glyphs,
+        use_aa=not cli.args.no_aa,
+    )
     # Render out the data
     font.save_to_image(normpath(cli.args.output))
 
@@ -31,7 +37,7 @@ def painter_make_font_image(cli):
 @cli.argument('-o', '--output', default='', help='Specify output directory. Defaults to same directory as input.')
 @cli.argument('-n', '--no-ascii', arg_only=True, action='store_true', help='Disables output of the full ASCII character set (0x20..0x7E), exporting only the glyphs specified.')
 @cli.argument('-u', '--unicode-glyphs', default='', help='Also generate the specified unicode glyphs.')
-@cli.argument('-f', '--format', required=True, help='Output format, valid types: %s' % (', '.join(valid_formats.keys())))
+@cli.argument('-f', '--format', required=True, help=f"Output format, valid types: {', '.join(valid_formats.keys())}")
 @cli.argument('-r', '--no-rle', arg_only=True, action='store_true', help='Disable the use of RLE to minimise converted image size.')
 @cli.argument('-w', '--raw', arg_only=True, action='store_true', help='Writes out the QFF file as raw data instead of c/h combo.')
 @cli.subcommand('Converts an input font image to something QMK firmware understands')
@@ -53,11 +59,11 @@ def painter_convert_font_image(cli):
 
     # Render out the data
     out_data = BytesIO()
-    font.save_to_qff(format, (False if cli.args.no_rle else True), out_data)
+    font.save_to_qff(format, not cli.args.no_rle, out_data)
     out_bytes = out_data.getvalue()
 
     if cli.args.raw:
-        raw_file = cli.args.output / (cli.args.input.stem + ".qff")
+        raw_file = cli.args.output / f"{cli.args.input.stem}.qff"
         with open(raw_file, 'wb') as raw:
             raw.write(out_bytes)
         return
@@ -76,11 +82,11 @@ def painter_convert_font_image(cli):
     }
 
     # Render the license
-    subs.update({'license': render_license(subs)})
+    subs['license'] = render_license(subs)
 
     # Render and write the header file
     header_text = render_header(subs)
-    header_file = cli.args.output / (cli.args.input.stem + ".qff.h")
+    header_file = cli.args.output / f"{cli.args.input.stem}.qff.h"
     with open(header_file, 'w') as header:
         print(f"Writing {header_file}...")
         header.write(header_text)
@@ -88,7 +94,7 @@ def painter_convert_font_image(cli):
 
     # Render and write the source file
     source_text = render_source(subs)
-    source_file = cli.args.output / (cli.args.input.stem + ".qff.c")
+    source_file = cli.args.output / f"{cli.args.input.stem}.qff.c"
     with open(source_file, 'w') as source:
         print(f"Writing {source_file}...")
         source.write(source_text)

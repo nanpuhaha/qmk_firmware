@@ -13,8 +13,7 @@ def os_test_windows():
 
     # MSYS really does not like "/" files - resolve manually
     file = cli.run(['cygpath', '-m', '/etc/qmk-release']).stdout.strip()
-    qmk_distro_version = release_info(file).get('VERSION', None)
-    if qmk_distro_version:
+    if qmk_distro_version := release_info(file).get('VERSION', None):
         cli.log.info('QMK MSYS version: %s', qmk_distro_version)
 
     return CheckStatus.OK

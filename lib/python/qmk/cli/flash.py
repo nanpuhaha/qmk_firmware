@@ -16,13 +16,7 @@ from qmk.flashers import flasher
 
 
 def _is_keymap_target(keyboard, keymap):
-    if keymap == 'all':
-        return True
-
-    if locate_keymap(keyboard, keymap):
-        return True
-
-    return False
+    return True if keymap == 'all' else bool(locate_keymap(keyboard, keymap))
 
 
 def _list_bootloaders():

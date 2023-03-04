@@ -89,7 +89,7 @@ def keyboard_folder(keyboard):
 def _find_name(path):
     """Determine the keyboard name by stripping off the base_path and rules.mk.
     """
-    return path.replace(base_path, "").replace(os.path.sep + "rules.mk", "")
+    return path.replace(base_path, "").replace(f"{os.path.sep}rules.mk", "")
 
 
 def keyboard_completer(prefix, action, parser, parsed_args):
@@ -103,7 +103,11 @@ def list_keyboards(resolve_defaults=True):
     """
     # We avoid pathlib here because this is performance critical code.
     kb_wildcard = os.path.join(base_path, "**", "rules.mk")
-    paths = [path for path in glob(kb_wildcard, recursive=True) if os.path.sep + 'keymaps' + os.path.sep not in path]
+    paths = [
+        path
+        for path in glob(kb_wildcard, recursive=True)
+        if f'{os.path.sep}keymaps{os.path.sep}' not in path
+    ]
 
     found = map(_find_name, paths)
     if resolve_defaults:
@@ -154,7 +158,7 @@ def rules_mk(keyboard):
     keyboard = Path(resolve_keyboard(keyboard))
     rules = parse_rules_mk_file(cur_dir / keyboard / 'rules.mk')
 
-    for i, dir in enumerate(keyboard.parts):
+    for dir in keyboard.parts:
         cur_dir = cur_dir / dir
         rules = parse_rules_mk_file(cur_dir / 'rules.mk', rules)
 
@@ -164,7 +168,7 @@ def rules_mk(keyboard):
 def render_layout(layout_data, render_ascii, key_labels=None):
     """Renders a single layout.
     """
-    textpad = [array('u', ' ' * 200) for x in range(100)]
+    textpad = [array('u', ' ' * 200) for _ in range(100)]
     style = 'ascii' if render_ascii else 'unicode'
 
     for key in layout_data:
@@ -187,11 +191,11 @@ def render_layout(layout_data, render_ascii, key_labels=None):
         else:
             render_key_rect(textpad, x, y, w, h, label, style)
 
-    lines = []
-    for line in textpad:
-        if line.tounicode().strip():
-            lines.append(line.tounicode().rstrip())
-
+    lines = [
+        line.tounicode().rstrip()
+        for line in textpad
+        if line.tounicode().strip()
+    ]
     return '\n'.join(lines)
 
 
