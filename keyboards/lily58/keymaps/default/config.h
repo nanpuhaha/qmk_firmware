@@ -22,9 +22,36 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 /* Select hand configuration */
 
-#define MASTER_LEFT
+// #define MASTER_LEFT
 // #define MASTER_RIGHT
-// #define EE_HANDS
+#define EE_HANDS
+// https://docs.qmk.fm/#/feature_split_keyboard?id=handedness-by-eeprom
+
+#define SPLIT_USB_DETECT
+/* Enabling this option changes the startup behavior to listen
+for an active USB communication to delegate which part is master
+and which is slave. With this option enabled and theres’s USB
+communication, then that half assumes it is the master, otherwise
+it assumes it is the slave.
+
+Without this option, the master is the half that can detect voltage
+on the physical USB connection (VBUS detection).
+
+https://docs.qmk.fm/#/feature_split_keyboard?id=hardware-configuration-options
+*/
+
+/* Master/slave delegation is made either by detecting voltage on
+VBUS connection or waiting for USB communication (SPLIT_USB_DETECT).
+Pro Micro boards can use VBUS detection out of the box and be used
+with or without SPLIT_USB_DETECT.
+
+Many ARM boards, but not all, do not support VBUS detection.
+Because it is common that ARM boards lack VBUS detection,
+SPLIT_USB_DETECT is automatically defined on ARM targets
+(technically when ChibiOS is targetted).
+
+https://docs.qmk.fm/#/feature_split_keyboard?id=hardware-considerations-and-mods
+*/
 
 #define QUICK_TAP_TERM 0
 #define TAPPING_TERM 100
