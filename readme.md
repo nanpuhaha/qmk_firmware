@@ -1,36 +1,34 @@
-# Quantum Mechanical Keyboard Firmware
+# QMK MSYS
 
-[![Current Version](https://img.shields.io/github/tag/qmk/qmk_firmware.svg)](https://github.com/qmk/qmk_firmware/tags)
-[![Discord](https://img.shields.io/discord/440868230475677696.svg)](https://discord.gg/Uq7gcHh)
-[![Docs Status](https://img.shields.io/badge/docs-ready-orange.svg)](https://docs.qmk.fm)
-[![GitHub contributors](https://img.shields.io/github/contributors/qmk/qmk_firmware.svg)](https://github.com/qmk/qmk_firmware/pulse/monthly)
-[![GitHub forks](https://img.shields.io/github/forks/qmk/qmk_firmware.svg?style=social&label=Fork)](https://github.com/qmk/qmk_firmware/)
+```bash
+git clone --recurse-submodules https://github.com/qmk/qmk_firmware.git
+cd qmk_firmware
 
-This is a keyboard firmware based on the [tmk\_keyboard firmware](https://github.com/tmk/tmk_keyboard) with some useful features for Atmel AVR and ARM controllers, and more specifically, the [OLKB product line](https://olkb.com), the [ErgoDox EZ](https://ergodox-ez.com) keyboard, and the [Clueboard product line](https://clueboard.co).
+qmk compile -kb lily58 -km default
+qmk flash -kb lily58 -km default
 
-## Documentation
+# https://docs.qmk.fm/#/cli_commands?id=qmk-flash
+# qmk flash [-m <microcontroller>] <compiledFirmware.[bin|hex]>
 
-* [See the official documentation on docs.qmk.fm](https://docs.qmk.fm)
+# https://docs.qmk.fm/#/feature_split_keyboard?id=handedness-by-eeprom
+# qmk flash -kb <keyboard> -km <keymap> -bl <bootloader>
+# qmk flash -kb crkbd/rev1 -km default -bl avrdude-split-left
+# qmk flash -kb crkbd/rev1 -km default -bl avrdude-split-right
+qmk flash -kb lily58 -km default -bl avrdude-split-left
+qmk flash -kb lily58 -km default -bl avrdude-split-right
 
-The docs are powered by [Docsify](https://docsify.js.org/) and hosted on [GitHub](/docs/). They are also viewable offline; see [Previewing the Documentation](https://docs.qmk.fm/#/contributing?id=previewing-the-documentation) for more details.
+qmk flash -kb lily58 -km korean -bl avrdude-split-left
+qmk flash -kb lily58 -km korean -bl avrdude-split-right
+```
 
-You can request changes by making a fork and opening a [pull request](https://github.com/qmk/qmk_firmware/pulls), or by clicking the "Edit this page" link at the bottom of any page.
+### 한영키 : RALT
+- Windows 키 코드 : 229 (0xE5)
+- BIOS 키 코드 56 (0x38)
+- VK 키 코드 : 21 (0x15)  `VK_KANA`
 
-## Supported Keyboards
+- [QMK Keycode](https://github.com/qmk/qmk_firmware/blob/master/docs/keycodes.md)
+- [QMK Keycode Cheatsheet](https://yanfali.github.io/keycodes/)
 
-* [Planck](/keyboards/planck/)
-* [Preonic](/keyboards/preonic/)
-* [ErgoDox EZ](/keyboards/ergodox_ez/)
-* [Clueboard](/keyboards/clueboard/)
-* [Cluepad](/keyboards/clueboard/17/)
-* [Atreus](/keyboards/atreus/)
-
-The project also includes community support for [lots of other keyboards](/keyboards/).
-
-## Maintainers
-
-QMK is developed and maintained by Jack Humbert of OLKB with contributions from the community, and of course, [Hasu](https://github.com/tmk). The OLKB product firmwares are maintained by [Jack Humbert](https://github.com/jackhumbert), the Ergodox EZ by [ZSA Technology Labs](https://github.com/zsa), the Clueboard by [Zach White](https://github.com/skullydazed), and the Atreus by [Phil Hagelberg](https://github.com/technomancy).
-
-## Official Website
-
-[qmk.fm](https://qmk.fm) is the official website of QMK, where you can find links to this page, the documentation, and the keyboards supported by QMK.
+- `KC_RIGHT_ALT` : Right Alt (Option/AltGr). aliases: `KC_RALT`, `KC_ROPT`, `KC_ALGR`
+- `RALT(kc)` : Hold Right Alt (AltGr) and press kc. aliases: `ROPT(kc)`, `ALGR(kc)`
+- `RALT_T(kc)` : Right Alt (AltGr) when held, kc when tapped. aliases: `ROPT_T(kc)`, `ALGR_T(kc)`
